@@ -15,5 +15,13 @@
   "bugs": {
     "url": "https://github.com/stefems/nationalizeddata/issues"
   },
-  "homepage": "https://github.com/stefems/nationalizeddata#readme"
+  "homepage": "https://github.com/stefems/nationalizeddata#readme",
+  "dependencies": {
+    "body-parser": "^1.17.2",
+    "express": "^4.15.4",
+    "firebase": "^4.3.0",
+    "http": "0.0.0",
+    "path": "^0.12.7",
+    "request": "^2.81.0"
+  }
 }
