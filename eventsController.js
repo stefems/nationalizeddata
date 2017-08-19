@@ -2,6 +2,7 @@
 const request = require('request');
 const jsdom = require('jsdom');
 const { JSDOM } = jsdom;
+const fs = require('fs');
 const express = require('express');
 const router = express.Router();
 const bodyParser = require('body-parser');
@@ -9,7 +10,18 @@ router.use( bodyParser.json() );       // to support JSON-encoded bodies
 router.use(bodyParser.urlencoded({     // to support URL-encoded bodies
   extended: true
 }));
-var env = require("./.env/.env.js") || process.env;
+var env;
+fs.stat(".env/.env.js", function(err, stat) {
+	if(err == null) {
+		env = require("./.env/.env.js");
+	} 
+	else if(err.code == 'ENOENT') {
+		env = {
+			facebookAppId: process.env.facebookAppId,
+			facebookAppSecret: process.env.facebookAppSecret
+		}
+	}
+});
 var access_token = env.facebookAppId + "|" + env.facebookAppSecret;
 //_________________________________
 //Firebase Setup___________________
