@@ -10,19 +10,21 @@ router.use( bodyParser.json() );       // to support JSON-encoded bodies
 router.use(bodyParser.urlencoded({     // to support URL-encoded bodies
   extended: true
 }));
-var env;
+var env, access_token;
 fs.stat(".env/.env.js", function(err, stat) {
 	if(err == null) {
+		console.log("dev");
 		env = require("./.env/.env.js");
 	} 
 	else if(err.code == 'ENOENT') {
+		console.log("prod");
 		env = {
 			facebookAppId: process.env.facebookAppId,
 			facebookAppSecret: process.env.facebookAppSecret
-		}
+		};
 	}
+	access_token = env.facebookAppId + "|" + env.facebookAppSecret;
 });
-var access_token = env.facebookAppId + "|" + env.facebookAppSecret;
 //_________________________________
 //Firebase Setup___________________
 var firebase = require("firebase");
