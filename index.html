@@ -4,9 +4,14 @@
 		<link rel="shortcut icon" type="image/png" href="/favicon.png"/>
 		<title>Place searches</title>
 		<link rel="stylesheet" type="text/css" href="./styles.css">
+		<script
+			  src="https://code.jquery.com/jquery-3.2.1.min.js"
+			  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+			  crossorigin="anonymous"></script>
+		<script type="text/javascript" src="./scripts.js"></script>
 	    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
 	    <meta charset="utf-8">
-	   <style>
+	    <style>
 	      /* Optional: Makes the sample page fill the window. */
 	      html, body {
 	        height: 100%;
@@ -17,6 +22,7 @@
     	<script>
 			var map;
 			var infowindow;
+			var service;
 
 			function initMap() {
 				var pyrmont = {lat: -33.867, lng: 151.195};
@@ -27,14 +33,117 @@
 				});
 
 				infowindow = new google.maps.InfoWindow();
-				var service = new google.maps.places.PlacesService(map);
-				service.nearbySearch({
-					location: pyrmont,
-					radius: 500,
-					type: ['store']
-				}, callback);
+				service = new google.maps.places.PlacesService(map);
+				// service.nearbySearch({
+				// 	location: pyrmont,
+				// 	radius: 500,
+				// 	type: ['store']
+				// }, callback);
 				infowindow = new google.maps.InfoWindow;
+				// setupPlaceDetails();
 				getLocation();
+				// setupSearchBarV2();
+			}
+			function setupSearchBarV2() {
+				// Create the search box and link it to the UI element.
+		        var input = document.getElementById('pac-input');
+		        var searchBox = new google.maps.places.SearchBox(input);
+		        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+		        // Bias the SearchBox results towards current map's viewport.
+		        map.addListener('bounds_changed', function() {
+		          searchBox.setBounds(map.getBounds());
+		        });
+
+		        var markers = [];
+		        // Listen for the event fired when the user selects a prediction and retrieve
+		        // more details for that place.
+		        searchBox.addListener('places_changed', function() {
+		          var places = searchBox.getPlaces();
+
+		          if (places.length == 0) {
+		            return;
+		          }
+
+		          // Clear out the old markers.
+		          markers.forEach(function(marker) {
+		            marker.setMap(null);
+		          });
+		          markers = [];
+
+		          // For each place, get the icon, name and location.
+		          var bounds = new google.maps.LatLngBounds();
+		          places.forEach(function(place) {
+		            if (!place.geometry) {
+		              console.log("Returned place contains no geometry");
+		              return;
+		            }
+		            var icon = {
+		              url: place.icon,
+		              size: new google.maps.Size(71, 71),
+		              origin: new google.maps.Point(0, 0),
+		              anchor: new google.maps.Point(17, 34),
+		              scaledSize: new google.maps.Size(25, 25)
+		            };
+
+		            // Create a marker for each place.
+		            markers.push(new google.maps.Marker({
+		              map: map,
+		              icon: icon,
+		              title: place.name,
+		              position: place.geometry.location
+		            }));
+		            service.getDetails({
+					placeId: place.place_id
+					}, function(place, status) {
+						if (status === google.maps.places.PlacesServiceStatus.OK) {
+							var marker = new google.maps.Marker({
+								map: map,
+								position: place.geometry.location
+							});
+							console.log(place);
+							// google.maps.event.addListener(marker, 'click', function() {
+							// 	infowindow.setContent('<div><strong>' + place.name + '</strong><br>' +
+							// 	  'Place ID: ' + place.place_id + '<br>' +
+							// 	  place.formatted_address + '</div>');
+							// 	// console.log(place.website);
+							// 	infowindow.open(map, this);
+							// });
+						}
+						else {
+							console.log(status);
+						}
+					});
+
+		            if (place.geometry.viewport) {
+		              // Only geocodes have viewport.
+		              bounds.union(place.geometry.viewport);
+		            } else {
+		              bounds.extend(place.geometry.location);
+		            }
+		          });
+		          map.fitBounds(bounds);
+		        });
+			}
+
+			function setupPlaceDetails() {
+				service.getDetails({
+					placeId: 'ChIJN1t_tDeuEmsRUsoyG83frY4'
+					}, function(place, status) {
+						if (status === google.maps.places.PlacesServiceStatus.OK) {
+							var marker = new google.maps.Marker({
+								map: map,
+								position: place.geometry.location
+							});
+							google.maps.event.addListener(marker, 'click', function() {
+								infowindow.setContent('<div><strong>' + place.name + '</strong><br>' +
+								  'Place ID: ' + place.place_id + '<br>' +
+								  place.formatted_address + '</div>');
+								// console.log(place.website);
+								infowindow.open(map, this);
+							});
+						}
+				});
 			}
 
 			function callback(results, status) {
@@ -67,8 +176,11 @@
 		              lng: position.coords.longitude
 		            };
 
-		            infowindow.setPosition(pos);
-		            infowindow.setContent('Location found.');
+		            // infowindow.setPosition(pos);
+		            // console.log(pos.lat + " " + pos.lng);
+		            sendLatLng(pos.lat, pos.lng);
+
+		            // infowindow.setContent('Location found.');
 		            infowindow.open(map);
 		            map.setCenter(pos);
 		          }, function() {
@@ -92,7 +204,10 @@
 	</head>	
 	<body>
 		<h1>Nationalized Data</h1>
-		<div><div id="map"></div></div>
+		<div>
+		    <input id="pac-input" class="controls" type="text" placeholder="Search Box">
+			<div id="map"></div>
+		</div>
 		<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAC4bVTmV7z7rkLOVmXgxlRBsuYOqaAvQU&libraries=places&callback=initMap" async defer></script>
 	</body>
 </html>
