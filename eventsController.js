@@ -156,7 +156,7 @@ router.get('/events/:lat/:lng', (req, res) => {
 		acquireEvents(url);
 	}
 	function acquireEvents(url) {
-		console.log("acquiring events for " + url);
+		// console.log("acquiring events for " + url);
 		request(url, function (error, response, body) {
 			if (error) {
 				console.log('error loading facebook events');
