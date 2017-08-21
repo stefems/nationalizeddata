@@ -42,7 +42,7 @@
 				infowindow = new google.maps.InfoWindow;
 				// setupPlaceDetails();
 				getLocation();
-				// setupSearchBarV2();
+				setupSearchBarV2();
 			}
 			function setupSearchBarV2() {
 				// Create the search box and link it to the UI element.
@@ -101,7 +101,7 @@
 								map: map,
 								position: place.geometry.location
 							});
-							console.log(place);
+							// console.log(place);
 							// google.maps.event.addListener(marker, 'click', function() {
 							// 	infowindow.setContent('<div><strong>' + place.name + '</strong><br>' +
 							// 	  'Place ID: ' + place.place_id + '<br>' +
@@ -177,8 +177,7 @@
 		            };
 
 		            // infowindow.setPosition(pos);
-		            // console.log(pos.lat + " " + pos.lng);
-		            sendLatLng(pos.lat, pos.lng);
+		            // sendLatLng(pos.lat, pos.lng);
 
 		            // infowindow.setContent('Location found.');
 		            infowindow.open(map);

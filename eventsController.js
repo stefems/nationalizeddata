@@ -5,11 +5,7 @@ const { JSDOM } = jsdom;
 const fs = require('fs');
 const express = require('express');
 const router = express.Router();
-const bodyParser = require('body-parser');
-router.use( bodyParser.json() );       // to support JSON-encoded bodies
-router.use(bodyParser.urlencoded({     // to support URL-encoded bodies
-  extended: true
-}));
+
 var env, access_token;
 fs.stat(".env/.env.js", function(err, stat) {
 	if(err == null) {
@@ -57,7 +53,7 @@ router.get('/events/:lat/:lng', (req, res) => {
 
 	request(options, function(error, response, body) {
 		if (error) {
-			console.log(error);
+			console.log("error sending a request to the yelp api.");
 		}
 		else if (JSON.parse(body)){
 			JSON.parse(body).businesses.forEach(function(business) {
@@ -68,6 +64,7 @@ router.get('/events/:lat/:lng', (req, res) => {
 			console.log("failed to hit the yelp api");
 		}
 	});
+
 	function getBusinessWebsiteFromYelp(yelpURL, businessName) {
 		var options = {
 			url: yelpURL,
@@ -95,7 +92,7 @@ router.get('/events/:lat/:lng', (req, res) => {
 				}
 			}
 			else {
-				console.log(error);
+				console.log("error requesting the business website.");
 			}
 		});
 	}
@@ -152,7 +149,7 @@ router.get('/events/:lat/:lng', (req, res) => {
 		else {
 			untilValue = date.getFullYear() + "-" + (date.getMonth() + 2) + "-15";  
 		}
-		let url = "https://graph.facebook.com/" + name + "/events?fields=is_cancelled,name,place,owner,description,start_time&until=" + untilValue + "&since=now&access_token=" + access_token;
+		let url = "https://graph.facebook.com/" + name + "/events?fields=is_cancelled,name,place,owner,description,category,start_time&until=" + untilValue + "&since=now&access_token=" + access_token;
 		acquireEvents(url);
 	}
 	function acquireEvents(url) {
@@ -160,17 +157,35 @@ router.get('/events/:lat/:lng', (req, res) => {
 		request(url, function (error, response, body) {
 			if (error) {
 				console.log('error loading facebook events');
-				console.log(error + " " + url);
+				// console.log(error + " " + url);
 			}
 			else if (!JSON.parse(body) || !JSON.parse(body).data) {
-				console.log("incorrect facebook url");
+				console.log("incorrect facebook url: " + url);
 			}
 			else {
 				let events = JSON.parse(body).data;
 				// console.log("found " + events.length + " events for " + url);
 				events.forEach(function(event) {
-					request.post({url: "/events/new", formData: event}, function (error, response, body) {
-						// console.log(response);
+					let data = {
+						name: event.name,
+						location: event.place.location.street + " " + event.place.location.city + ", " + event.place.location.state,
+						facebook_id: event.id,
+						host: event.place.name,
+						start_time: event.start_time,
+						category: event.category,
+						description: event.description
+					};
+					request.post({
+			            url: 'http://localhost:3000/events/' + event.place.id,
+			            form: data
+			        }, function (error, response, body) {
+						if (error) {
+							console.log("post error");
+							// console.log(error);
+						}
+						else {
+							// console.log("no post error");
+						}
 					});
 				});
 				if (JSON.parse(body).paging && JSON.parse(body).paging.next) {
@@ -181,9 +196,23 @@ router.get('/events/:lat/:lng', (req, res) => {
 	}
 });
 
-router.post('/events/new', (req, res) => {
-	console.log(req.body);
-	res.send({"status":"ought to save event"});
+router.post('/events/:owner', (req, res) => {
+	if (req.body) {
+		let event = req.body;
+		//CREATE ONE EVENT
+		let tags = [];
+		let setting = database.ref("events/" + req.params.owner + '/eventListing/' + event.facebook_id).set(event);
+		setting.then(function() {
+			res.send({"status": "success", "message": "saved event to firebase.", "event": event});
+		}).catch(function() {
+			res.send({"status": "failure", "message": "firebase save on event failed."});
+		});
+		res.send({"saved": event});
+	}
+	else {
+		res.send({"status": "failure", "message": "no body given to this route."});
+	}
+		
 });
 
 module.exports = router;
