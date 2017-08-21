@@ -167,12 +167,12 @@ router.get('/events/:lat/:lng', (req, res) => {
 			}
 			else {
 				let events = JSON.parse(body).data;
-				console.log("found " + events.length + " events for " + url);
-				// events.forEach(function(event) {
-				// 	request.post({url: "/events/new", formData: event}, function (error, response, body) {
-				// 		console.log(response);
-				// 	});
-				// });
+				// console.log("found " + events.length + " events for " + url);
+				events.forEach(function(event) {
+					request.post({url: "/events/new", formData: event}, function (error, response, body) {
+						// console.log(response);
+					});
+				});
 				if (JSON.parse(body).paging && JSON.parse(body).paging.next) {
 					acquireEvents(JSON.parse(body).paging.next);
 				}
